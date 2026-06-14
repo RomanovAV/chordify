@@ -3,4 +3,5 @@ data/
 .git/
 .idea/
 .DS_Store
+.env
 *.iml

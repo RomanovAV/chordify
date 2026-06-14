@@ -42,17 +42,30 @@ ssh root@SERVER_IP
 cd /root/chordify
 ```
 
-## 3. Start
+## 3. Set credentials
+
+```sh
+cp .env.example .env
+nano .env
+```
+
+Set a strong `CHORDIFY_PASSWORD`.
+
+## 4. Start
 
 ```sh
 docker compose up --build -d
 ```
 
-Open:
+The app listens only on `127.0.0.1:8080` inside the VDS. It is not exposed directly to the internet.
 
-```text
-http://SERVER_IP:8080
+For local testing through SSH:
+
+```sh
+ssh -L 8080:127.0.0.1:8080 root@SERVER_IP
 ```
+
+Then open `http://localhost:8080` on your machine and sign in with the credentials from `.env`.
 
 Logs:
 
@@ -66,7 +79,7 @@ Stop:
 docker compose down
 ```
 
-## 4. Data
+## 5. Data
 
 The app uses SQLite. The database is stored in the Docker volume:
 
@@ -76,7 +89,7 @@ chordify_chordify-data
 
 Do not run `docker compose down -v` unless you want to delete the database.
 
-## 5. Update
+## 6. Update
 
 ```sh
 cd /root/chordify
@@ -90,7 +103,7 @@ If you uploaded files with `rsync`, upload them again and run:
 docker compose up --build -d
 ```
 
-## 6. Backup SQLite
+## 7. Backup SQLite
 
 ```sh
 mkdir -p ~/chordify-backups
