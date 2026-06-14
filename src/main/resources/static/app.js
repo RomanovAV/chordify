@@ -1,15 +1,26 @@
 const state = {
     songs: [],
     selected: null,
-    chords: []
+    chords: [],
+    editingExisting: false
 };
 
 const els = {
+    openLibraryButton: document.querySelector("#openLibraryButton"),
+    closeLibraryButton: document.querySelector("#closeLibraryButton"),
+    libraryPanel: document.querySelector("#libraryPanel"),
     songList: document.querySelector("#songList"),
     searchInput: document.querySelector("#searchInput"),
+    newSongButton: document.querySelector("#newSongButton"),
+    emptyAddButton: document.querySelector("#emptyAddButton"),
     songTitle: document.querySelector("#songTitle"),
     artistLabel: document.querySelector("#artistLabel"),
     songView: document.querySelector("#songView"),
+    emptyState: document.querySelector("#emptyState"),
+    editorPanel: document.querySelector("#editorPanel"),
+    editorTitle: document.querySelector("#editorTitle"),
+    closeEditorButton: document.querySelector("#closeEditorButton"),
+    editButton: document.querySelector("#editButton"),
     titleInput: document.querySelector("#titleInput"),
     artistInput: document.querySelector("#artistInput"),
     bodyInput: document.querySelector("#bodyInput"),
@@ -17,7 +28,6 @@ const els = {
     chordList: document.querySelector("#chordList"),
     statusLine: document.querySelector("#statusLine"),
     songForm: document.querySelector("#songForm"),
-    newSongButton: document.querySelector("#newSongButton"),
     addChordButton: document.querySelector("#addChordButton"),
     deleteButton: document.querySelector("#deleteButton")
 };
@@ -71,6 +81,7 @@ async function selectSong(id) {
     state.selected = await api(`/api/songs/${id}`);
     state.chords = state.selected.chords.map(chord => ({...chord}));
     fillForm(state.selected);
+    closeLibrary();
     renderAll();
 }
 
@@ -80,27 +91,64 @@ function fillForm(song) {
     els.bodyInput.value = song.body || "";
 }
 
-function newSong() {
-    state.selected = null;
-    state.chords = [];
-    fillForm({title: "", artist: "", body: ""});
+function openLibrary() {
+    els.libraryPanel.hidden = false;
+    renderSongList();
+    els.searchInput.focus();
+}
+
+function closeLibrary() {
+    els.libraryPanel.hidden = true;
+}
+
+function openEditor({isNew}) {
+    state.editingExisting = !isNew;
+    if (isNew) {
+        state.selected = null;
+        state.chords = [];
+        fillForm({title: "", artist: "", body: ""});
+        closeLibrary();
+    } else if (state.selected) {
+        fillForm(state.selected);
+        state.chords = state.selected.chords.map(chord => ({...chord}));
+    }
+    els.editorTitle.textContent = isNew ? "Новая песня" : "Редактировать";
+    els.editorPanel.hidden = false;
+    setStatus("");
     renderAll();
     els.titleInput.focus();
 }
 
+function closeEditor() {
+    els.editorPanel.hidden = true;
+    if (state.selected) {
+        fillForm(state.selected);
+        state.chords = state.selected.chords.map(chord => ({...chord}));
+    }
+    renderAll();
+}
+
 function renderAll() {
-    const title = els.titleInput.value.trim() || "Новая песня";
+    const hasSelection = Boolean(state.selected);
+    const title = hasSelection ? state.selected.title : "Chordify";
     els.songTitle.textContent = title;
-    els.artistLabel.textContent = els.artistInput.value.trim();
+    els.artistLabel.textContent = hasSelection ? state.selected.artist || "" : "";
+    els.emptyState.hidden = hasSelection;
+    els.songView.hidden = !hasSelection;
+    els.editButton.hidden = !hasSelection;
+    els.deleteButton.hidden = !hasSelection;
     renderSongList();
     renderSongView();
     renderChordList();
-    els.deleteButton.hidden = !state.selected;
 }
 
 function renderSongView() {
-    const lines = els.bodyInput.value.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
-    const byLine = groupChordsByLine(state.chords);
+    if (!state.selected) {
+        els.songView.replaceChildren();
+        return;
+    }
+    const lines = state.selected.body.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+    const byLine = groupChordsByLine(state.selected.chords);
     const fragments = lines.map((line, lineIndex) => renderLine(line, byLine.get(lineIndex) || []));
     els.songView.replaceChildren(...fragments);
 }
@@ -153,7 +201,7 @@ function renderChordList() {
         remove.title = "Убрать аккорд";
         remove.addEventListener("click", () => {
             state.chords.splice(index, 1);
-            renderAll();
+            renderChordList();
         });
         item.append(label, remove);
         return item;
@@ -186,7 +234,7 @@ function addChord() {
     });
     state.chords.sort((a, b) => a.lineIndex - b.lineIndex || a.charIndex - b.charIndex || a.sortOrder - b.sortOrder);
     els.chordInput.value = "";
-    renderAll();
+    renderChordList();
     els.bodyInput.focus();
 }
 
@@ -199,14 +247,14 @@ async function saveSong(event) {
         chords: state.chords.map((chord, index) => ({...chord, sortOrder: index}))
     };
     try {
-        const saved = state.selected
+        const saved = state.editingExisting && state.selected
             ? await api(`/api/songs/${state.selected.id}`, {method: "PUT", body: JSON.stringify(payload)})
             : await api("/api/songs", {method: "POST", body: JSON.stringify(payload)});
         state.selected = saved;
         state.chords = saved.chords.map(chord => ({...chord}));
         await loadSongs(false);
+        closeEditor();
         renderAll();
-        setStatus("Сохранено");
     } catch (error) {
         setStatus(error.message);
     }
@@ -222,30 +270,30 @@ async function deleteSong() {
     fillForm({title: "", artist: "", body: ""});
     await loadSongs(true);
     renderAll();
-    setStatus("Удалено");
 }
 
 function setStatus(message) {
     els.statusLine.textContent = message;
 }
 
-els.newSongButton.addEventListener("click", newSong);
+els.openLibraryButton.addEventListener("click", openLibrary);
+els.closeLibraryButton.addEventListener("click", closeLibrary);
+els.libraryPanel.querySelector("[data-close-library]").addEventListener("click", closeLibrary);
+els.newSongButton.addEventListener("click", () => openEditor({isNew: true}));
+els.emptyAddButton.addEventListener("click", () => openEditor({isNew: true}));
+els.editButton.addEventListener("click", () => openEditor({isNew: false}));
+els.closeEditorButton.addEventListener("click", closeEditor);
+els.editorPanel.querySelector("[data-close-editor]").addEventListener("click", closeEditor);
 els.searchInput.addEventListener("input", renderSongList);
 els.addChordButton.addEventListener("click", addChord);
 els.songForm.addEventListener("submit", saveSong);
 els.deleteButton.addEventListener("click", deleteSong);
-els.titleInput.addEventListener("input", renderAll);
-els.artistInput.addEventListener("input", renderAll);
 els.bodyInput.addEventListener("input", () => {
-    state.chords = state.chords.filter(chord => {
-        const lines = els.bodyInput.value.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
-        return chord.lineIndex < lines.length && chord.charIndex <= lines[chord.lineIndex].length;
-    });
-    renderAll();
+    const lines = els.bodyInput.value.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+    state.chords = state.chords.filter(chord => chord.lineIndex < lines.length && chord.charIndex <= lines[chord.lineIndex].length);
+    renderChordList();
 });
 
 loadSongs().then(() => {
-    if (!state.selected) {
-        newSong();
-    }
+    renderAll();
 }).catch(error => setStatus(error.message));
