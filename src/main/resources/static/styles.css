@@ -164,11 +164,23 @@ h2 {
 }
 
 .empty-state[hidden],
-.song-view[hidden],
+.song-workspace[hidden],
 .library-panel[hidden],
 .editor-panel[hidden],
 button[hidden] {
     display: none;
+}
+
+.song-workspace {
+    align-items: start;
+    display: grid;
+    gap: clamp(24px, 4vw, 56px);
+    grid-template-columns: minmax(0, 1fr) minmax(210px, 300px);
+    min-height: 0;
+}
+
+.song-workspace--no-chords {
+    grid-template-columns: minmax(0, 1fr);
 }
 
 .song-view {
@@ -204,6 +216,129 @@ button[hidden] {
 .lyric-char {
     color: var(--text);
     grid-row: 2;
+}
+
+.chord-panel {
+    border-left: 1px dashed var(--line);
+    display: grid;
+    gap: 14px;
+    max-height: calc(100vh - 170px);
+    overflow: auto;
+    padding: 42px 0 42px 24px;
+    position: sticky;
+    top: 0;
+}
+
+.chord-panel h2 {
+    color: var(--cyan);
+    font-size: 14px;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.chord-panel h2::before {
+    color: var(--muted);
+    content: "{ ";
+}
+
+.chord-panel h2::after {
+    color: var(--muted);
+    content: " }";
+}
+
+.chord-panel__grid {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+}
+
+.chord-card {
+    border: 1px solid rgb(58 66 64 / 80%);
+    border-radius: 2px;
+    background:
+        linear-gradient(180deg, rgb(216 75 143 / 6%), transparent 88px),
+        rgb(15 18 18 / 72%);
+    display: grid;
+    gap: 4px;
+    justify-items: center;
+    min-width: 0;
+    padding: 10px 8px 8px;
+}
+
+.chord-card h3 {
+    color: var(--chord);
+    font-size: 18px;
+    line-height: 1.1;
+    margin: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    text-align: center;
+    text-shadow: 0 0 16px rgb(216 75 143 / 18%);
+}
+
+.chord-diagram {
+    color: var(--text);
+    display: block;
+    height: auto;
+    max-width: 132px;
+    width: 100%;
+}
+
+.chord-diagram__string,
+.chord-diagram__fret {
+    stroke: var(--line);
+    stroke-width: 1.2;
+}
+
+.chord-diagram__nut {
+    stroke: #eef0e5;
+    stroke-linecap: round;
+    stroke-width: 4;
+}
+
+.chord-diagram__dot,
+.chord-diagram__barre {
+    fill: var(--accent);
+    stroke: var(--accent);
+}
+
+.chord-diagram__barre {
+    stroke-linecap: round;
+    stroke-width: 15;
+}
+
+.chord-diagram__finger {
+    fill: #071210;
+    font-size: 8px;
+    font-weight: 700;
+    text-anchor: middle;
+}
+
+.chord-diagram__marker,
+.chord-diagram__base {
+    fill: var(--muted);
+    font-size: 11px;
+    text-anchor: middle;
+}
+
+.chord-diagram__base {
+    text-anchor: start;
+}
+
+.chord-diagram--unknown {
+    border: 1px dashed rgb(58 66 64 / 70%);
+    min-height: 132px;
+}
+
+.chord-diagram--unknown text {
+    fill: var(--muted);
+    font-size: 13px;
+    text-anchor: middle;
+}
+
+.chord-diagram--unknown text:first-child {
+    fill: var(--chord);
+    font-size: 32px;
 }
 
 .library-panel,
@@ -456,6 +591,28 @@ textarea {
     .topbar__actions {
         display: grid;
         grid-template-columns: 1fr 1fr;
+    }
+
+    .song-workspace {
+        gap: 8px;
+        grid-template-columns: 1fr;
+    }
+
+    .song-view {
+        padding-bottom: 18px;
+    }
+
+    .chord-panel {
+        border-left: 0;
+        border-top: 1px dashed var(--line);
+        max-height: none;
+        overflow: visible;
+        padding: 18px 0 30px;
+        position: static;
+    }
+
+    .chord-panel__grid {
+        grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
     }
 
     .library-sheet,

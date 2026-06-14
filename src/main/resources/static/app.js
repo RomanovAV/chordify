@@ -7,6 +7,30 @@ const state = {
 
 const API_BASE = location.protocol === "file:" ? "http://127.0.0.1:8080" : "";
 const TAB_SIZE = 4;
+const CHORD_DIAGRAMS = {
+    A: {frets: ["x", 0, 2, 2, 2, 0], fingers: ["", "", "1", "2", "3", ""]},
+    Am: {frets: ["x", 0, 2, 2, 1, 0], fingers: ["", "", "2", "3", "1", ""]},
+    A7: {frets: ["x", 0, 2, 0, 2, 0], fingers: ["", "", "2", "", "3", ""]},
+    B: {base: 2, frets: ["x", 1, 3, 3, 3, 1], fingers: ["", "1", "3", "3", "3", "1"], barre: {fret: 1, from: 1, to: 5}},
+    Bm: {base: 2, frets: ["x", 1, 3, 3, 2, 1], fingers: ["", "1", "3", "4", "2", "1"], barre: {fret: 1, from: 1, to: 5}},
+    B7: {frets: ["x", 2, 1, 2, 0, 2], fingers: ["", "2", "1", "3", "", "4"]},
+    C: {frets: ["x", 3, 2, 0, 1, 0], fingers: ["", "3", "2", "", "1", ""]},
+    C7: {frets: ["x", 3, 2, 3, 1, 0], fingers: ["", "3", "2", "4", "1", ""]},
+    D: {frets: ["x", "x", 0, 2, 3, 2], fingers: ["", "", "", "1", "3", "2"]},
+    Dm: {frets: ["x", "x", 0, 2, 3, 1], fingers: ["", "", "", "2", "3", "1"]},
+    D7: {frets: ["x", "x", 0, 2, 1, 2], fingers: ["", "", "", "2", "1", "3"]},
+    E: {frets: [0, 2, 2, 1, 0, 0], fingers: ["", "2", "3", "1", "", ""]},
+    Em: {frets: [0, 2, 2, 0, 0, 0], fingers: ["", "2", "3", "", "", ""]},
+    E7: {frets: [0, 2, 0, 1, 0, 0], fingers: ["", "2", "", "1", "", ""]},
+    F: {frets: [1, 3, 3, 2, 1, 1], fingers: ["1", "3", "4", "2", "1", "1"], barre: {fret: 1, from: 0, to: 5}},
+    Fm: {frets: [1, 3, 3, 1, 1, 1], fingers: ["1", "3", "4", "1", "1", "1"], barre: {fret: 1, from: 0, to: 5}},
+    F7: {frets: [1, 3, 1, 2, 1, 1], fingers: ["1", "3", "1", "2", "1", "1"], barre: {fret: 1, from: 0, to: 5}},
+    G: {frets: [3, 2, 0, 0, 0, 3], fingers: ["3", "2", "", "", "", "4"]},
+    G7: {frets: [3, 2, 0, 0, 0, 1], fingers: ["3", "2", "", "", "", "1"]},
+    H: {base: 2, frets: ["x", 1, 3, 3, 3, 1], fingers: ["", "1", "3", "3", "3", "1"], barre: {fret: 1, from: 1, to: 5}},
+    Hm: {base: 2, frets: ["x", 1, 3, 3, 2, 1], fingers: ["", "1", "3", "4", "2", "1"], barre: {fret: 1, from: 1, to: 5}},
+    H7: {frets: ["x", 2, 1, 2, 0, 2], fingers: ["", "2", "1", "3", "", "4"]}
+};
 
 const els = {
     openLibraryButton: document.querySelector("#openLibraryButton"),
@@ -19,6 +43,8 @@ const els = {
     songTitle: document.querySelector("#songTitle"),
     artistLabel: document.querySelector("#artistLabel"),
     songView: document.querySelector("#songView"),
+    songWorkspace: document.querySelector("#songWorkspace"),
+    chordPanel: document.querySelector("#chordPanel"),
     emptyState: document.querySelector("#emptyState"),
     editorPanel: document.querySelector("#editorPanel"),
     editorTitle: document.querySelector("#editorTitle"),
@@ -143,11 +169,13 @@ function renderAll() {
     els.songTitle.textContent = title;
     els.artistLabel.textContent = hasSelection ? state.selected.artist || "" : "";
     els.emptyState.hidden = hasSelection;
-    els.songView.hidden = !hasSelection;
+    els.songWorkspace.hidden = !hasSelection;
+    els.songWorkspace.classList.toggle("song-workspace--no-chords", !hasSelection || state.selected.chords.length === 0);
     els.editButton.hidden = !hasSelection;
     els.deleteButton.hidden = !hasSelection;
     renderSongList();
     renderSongView();
+    renderChordPanel();
 }
 
 function renderSongView() {
@@ -193,6 +221,132 @@ function renderLine(line, chords) {
     });
     wrapper.append(grid);
     return wrapper;
+}
+
+function renderChordPanel() {
+    if (!state.selected) {
+        els.chordPanel.hidden = true;
+        els.chordPanel.replaceChildren();
+        return;
+    }
+    const chordNames = uniqueChordSymbols(state.selected.chords);
+    if (chordNames.length === 0) {
+        els.chordPanel.hidden = true;
+        els.chordPanel.replaceChildren();
+        return;
+    }
+    els.chordPanel.hidden = false;
+    const title = document.createElement("h2");
+    title.textContent = "Аккорды";
+    const grid = document.createElement("div");
+    grid.className = "chord-panel__grid";
+    grid.replaceChildren(...chordNames.map(symbol => createChordDiagram(symbol)));
+    els.chordPanel.replaceChildren(title, grid);
+}
+
+function uniqueChordSymbols(chords) {
+    const seen = new Set();
+    return chords
+        .map(chord => chord.symbol)
+        .filter(symbol => {
+            const normalized = normalizeChordSymbol(symbol);
+            if (seen.has(normalized)) {
+                return false;
+            }
+            seen.add(normalized);
+            return true;
+        });
+}
+
+function normalizeChordSymbol(symbol) {
+    return symbol.replace(/\/[A-GH][#b]?$/, "");
+}
+
+function createChordDiagram(symbol) {
+    const card = document.createElement("article");
+    card.className = "chord-card";
+    const name = document.createElement("h3");
+    name.textContent = symbol;
+    const normalized = normalizeChordSymbol(symbol);
+    const diagram = CHORD_DIAGRAMS[normalized] || null;
+    const svg = diagram ? renderChordSvg(diagram) : renderUnknownChordSvg();
+    card.append(name, svg);
+    return card;
+}
+
+function renderChordSvg(diagram) {
+    const svg = createSvgElement("svg", {
+        class: "chord-diagram",
+        viewBox: "0 0 132 148",
+        role: "img",
+        "aria-label": "Схема аккорда"
+    });
+    const stringXs = [18, 37, 56, 75, 94, 113];
+    const fretYs = [41, 62, 83, 104, 125];
+    const topY = 20;
+    const bottomY = 125;
+    const base = diagram.base || 1;
+
+    if (base === 1) {
+        svg.append(createSvgElement("line", {class: "chord-diagram__nut", x1: 18, y1: topY, x2: 113, y2: topY}));
+    } else {
+        svg.append(createSvgElement("text", {class: "chord-diagram__base", x: 4, y: 47}, `${base}fr`));
+        svg.append(createSvgElement("line", {class: "chord-diagram__fret", x1: 18, y1: topY, x2: 113, y2: topY}));
+    }
+    stringXs.forEach(x => svg.append(createSvgElement("line", {class: "chord-diagram__string", x1: x, y1: topY, x2: x, y2: bottomY})));
+    fretYs.forEach(y => svg.append(createSvgElement("line", {class: "chord-diagram__fret", x1: 18, y1: y, x2: 113, y2: y})));
+
+    if (diagram.barre) {
+        const y = fretCenterY(diagram.barre.fret);
+        svg.append(createSvgElement("line", {
+            class: "chord-diagram__barre",
+            x1: stringXs[diagram.barre.from],
+            y1: y,
+            x2: stringXs[diagram.barre.to],
+            y2: y
+        }));
+    }
+
+    diagram.frets.forEach((fret, stringIndex) => {
+        const x = stringXs[stringIndex];
+        if (fret === "x" || fret === 0) {
+            svg.append(createSvgElement("text", {class: "chord-diagram__marker", x, y: 14}, fret === "x" ? "x" : "o"));
+            return;
+        }
+        if (diagram.barre?.fret === fret && stringIndex >= diagram.barre.from && stringIndex <= diagram.barre.to) {
+            return;
+        }
+        const y = fretCenterY(fret);
+        svg.append(createSvgElement("circle", {class: "chord-diagram__dot", cx: x, cy: y, r: 7}));
+        const finger = diagram.fingers?.[stringIndex];
+        if (finger) {
+            svg.append(createSvgElement("text", {class: "chord-diagram__finger", x, y: y + 3}, finger));
+        }
+    });
+    return svg;
+}
+
+function fretCenterY(fret) {
+    return 20 + (fret - 0.5) * 21;
+}
+
+function renderUnknownChordSvg() {
+    const svg = createSvgElement("svg", {
+        class: "chord-diagram chord-diagram--unknown",
+        viewBox: "0 0 132 148",
+        role: "img",
+        "aria-label": "Схема аккорда не найдена"
+    });
+    svg.append(createSvgElement("text", {x: 66, y: 70}, "?"));
+    svg.append(createSvgElement("text", {x: 66, y: 94}, "нет схемы"));
+    return svg;
+}
+
+function createSvgElement(tag, attrs, text = "") {
+    const element = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    Object.entries(attrs).forEach(([key, value]) => element.setAttribute(key, value));
+    element.textContent = text;
+    return element;
 }
 
 function renderLineEditor(body, chords) {
