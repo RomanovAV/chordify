@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chordify</title>
-    <link rel="stylesheet" href="styles.css?v=9">
+    <link rel="stylesheet" href="styles.css?v=10">
 </head>
 <body>
 <main class="app">
@@ -58,16 +58,16 @@
                     Исполнитель
                     <input id="artistInput" name="artist" autocomplete="off">
                 </label>
-                <label>
-                    Текст
-                    <textarea id="bodyInput" name="body" spellcheck="false"></textarea>
-                </label>
-                <div class="chord-toolbar">
-                    <input id="chordInput" aria-label="Аккорд" placeholder="Am">
-                    <button id="addChordButton" type="button">Поставить</button>
-                    <button id="parseSongButton" type="button">Обработать</button>
+                <div class="line-editor-field">
+                    <div class="field-label">Текст и аккорды</div>
+                    <div id="lineEditor" class="line-editor"></div>
+                    <button id="addLineButton" class="secondary" type="button">+ строка</button>
                 </div>
-                <ol id="chordList" class="chord-list"></ol>
+                <details class="parse-panel">
+                    <summary>Импорт</summary>
+                    <textarea id="bodyInput" name="body" spellcheck="false"></textarea>
+                    <button id="parseSongButton" type="button">Разобрать</button>
+                </details>
                 <div class="form-actions">
                     <button class="primary" type="submit">Сохранить</button>
                     <p id="statusLine" class="status" role="status"></p>
@@ -76,6 +76,6 @@
         </section>
     </aside>
 </main>
-<script src="app.js?v=9"></script>
+<script src="app.js?v=10"></script>
 </body>
 </html>

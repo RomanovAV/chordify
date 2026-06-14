@@ -333,37 +333,97 @@ textarea {
     tab-size: 4;
 }
 
-.chord-toolbar {
+.line-editor-field {
     display: grid;
     gap: 8px;
-    grid-template-columns: minmax(80px, 1fr) auto auto;
 }
 
-.chord-list {
-    display: grid;
-    gap: 6px;
-    margin: 0;
-    max-height: 210px;
-    overflow: auto;
-    padding: 0;
+.field-label {
+    color: var(--muted);
+    font-size: 13px;
 }
 
-.chord-list li {
-    align-items: center;
+.line-editor {
     border: 1px solid var(--line);
-    border-radius: 2px;
-    background: rgb(255 255 255 / 2%);
+    background: #0f1212;
     display: grid;
-    gap: 8px;
-    grid-template-columns: 1fr auto;
-    list-style-position: inside;
-    padding: 8px 8px 8px 10px;
+    max-height: min(58vh, 620px);
+    overflow: auto;
+    padding: 8px;
+    tab-size: 4;
 }
 
-.chord-list button {
-    color: var(--danger);
-    min-height: 30px;
-    padding: 0 8px;
+.line-editor__row {
+    align-items: stretch;
+    display: grid;
+    gap: 8px;
+    grid-template-columns: 32px minmax(0, 1fr) 34px;
+    padding: 4px 0;
+}
+
+.line-editor__row + .line-editor__row {
+    border-top: 1px dashed rgb(58 66 64 / 70%);
+}
+
+.line-editor__number {
+    color: var(--muted);
+    font-size: 12px;
+    padding-top: 40px;
+    text-align: right;
+}
+
+.line-editor__fields {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+}
+
+.line-editor__chords,
+.line-editor__lyrics {
+    border-color: transparent;
+    background: transparent;
+    font-family: var(--mono-font);
+    height: 32px;
+    line-height: 1;
+    min-width: 34rem;
+    padding: 7px 8px;
+    white-space: pre;
+}
+
+.line-editor__chords {
+    color: var(--chord);
+    font-weight: 700;
+}
+
+.line-editor__lyrics {
+    color: var(--text);
+}
+
+.line-editor__chords:focus,
+.line-editor__lyrics:focus {
+    background: rgb(33 196 141 / 5%);
+}
+
+.parse-panel {
+    border-top: 1px dashed var(--line);
+    display: grid;
+    gap: 10px;
+    padding-top: 12px;
+}
+
+.parse-panel summary {
+    color: var(--cyan);
+    cursor: pointer;
+    width: max-content;
+}
+
+.parse-panel textarea {
+    margin-top: 10px;
+    min-height: 190px;
+}
+
+.parse-panel button {
+    margin-top: 8px;
 }
 
 .form-actions {
@@ -407,7 +467,12 @@ textarea {
         grid-template-columns: 1fr;
     }
 
-    .chord-toolbar {
-        grid-template-columns: 1fr;
+    .line-editor__row {
+        grid-template-columns: 24px minmax(0, 1fr) 34px;
+    }
+
+    .line-editor__chords,
+    .line-editor__lyrics {
+        min-width: 24rem;
     }
 }
