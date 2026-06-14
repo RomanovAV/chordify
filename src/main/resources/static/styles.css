@@ -229,6 +229,13 @@ button[hidden] {
     top: 0;
 }
 
+.chord-panel__header {
+    align-items: center;
+    display: grid;
+    gap: 10px;
+    grid-template-columns: minmax(0, 1fr);
+}
+
 .chord-panel h2 {
     color: var(--cyan);
     font-size: 14px;
@@ -244,6 +251,35 @@ button[hidden] {
 .chord-panel h2::after {
     color: var(--muted);
     content: " }";
+}
+
+.instrument-toggle {
+    border: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 32px;
+}
+
+.instrument-toggle button {
+    border: 0;
+    border-radius: 0;
+    color: var(--muted);
+    font-size: 12px;
+    min-height: 30px;
+    padding: 0 8px;
+}
+
+.instrument-toggle button + button {
+    border-left: 1px solid var(--line);
+}
+
+.instrument-toggle button.active {
+    background: rgb(33 196 141 / 14%);
+    color: var(--accent-strong);
+}
+
+.instrument-toggle button:hover {
+    background: rgb(43 186 212 / 9%);
 }
 
 .chord-panel__grid {

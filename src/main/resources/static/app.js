@@ -2,34 +2,61 @@ const state = {
     songs: [],
     selected: null,
     chords: [],
-    editingExisting: false
+    editingExisting: false,
+    diagramInstrument: localStorage.getItem("diagramInstrument") || "guitar"
 };
 
 const API_BASE = location.protocol === "file:" ? "http://127.0.0.1:8080" : "";
 const TAB_SIZE = 4;
 const CHORD_DIAGRAMS = {
-    A: {frets: ["x", 0, 2, 2, 2, 0], fingers: ["", "", "1", "2", "3", ""]},
-    Am: {frets: ["x", 0, 2, 2, 1, 0], fingers: ["", "", "2", "3", "1", ""]},
-    A7: {frets: ["x", 0, 2, 0, 2, 0], fingers: ["", "", "2", "", "3", ""]},
-    B: {base: 2, frets: ["x", 1, 3, 3, 3, 1], fingers: ["", "1", "3", "3", "3", "1"], barre: {fret: 1, from: 1, to: 5}},
-    Bm: {base: 2, frets: ["x", 1, 3, 3, 2, 1], fingers: ["", "1", "3", "4", "2", "1"], barre: {fret: 1, from: 1, to: 5}},
-    B7: {frets: ["x", 2, 1, 2, 0, 2], fingers: ["", "2", "1", "3", "", "4"]},
-    C: {frets: ["x", 3, 2, 0, 1, 0], fingers: ["", "3", "2", "", "1", ""]},
-    C7: {frets: ["x", 3, 2, 3, 1, 0], fingers: ["", "3", "2", "4", "1", ""]},
-    D: {frets: ["x", "x", 0, 2, 3, 2], fingers: ["", "", "", "1", "3", "2"]},
-    Dm: {frets: ["x", "x", 0, 2, 3, 1], fingers: ["", "", "", "2", "3", "1"]},
-    D7: {frets: ["x", "x", 0, 2, 1, 2], fingers: ["", "", "", "2", "1", "3"]},
-    E: {frets: [0, 2, 2, 1, 0, 0], fingers: ["", "2", "3", "1", "", ""]},
-    Em: {frets: [0, 2, 2, 0, 0, 0], fingers: ["", "2", "3", "", "", ""]},
-    E7: {frets: [0, 2, 0, 1, 0, 0], fingers: ["", "2", "", "1", "", ""]},
-    F: {frets: [1, 3, 3, 2, 1, 1], fingers: ["1", "3", "4", "2", "1", "1"], barre: {fret: 1, from: 0, to: 5}},
-    Fm: {frets: [1, 3, 3, 1, 1, 1], fingers: ["1", "3", "4", "1", "1", "1"], barre: {fret: 1, from: 0, to: 5}},
-    F7: {frets: [1, 3, 1, 2, 1, 1], fingers: ["1", "3", "1", "2", "1", "1"], barre: {fret: 1, from: 0, to: 5}},
-    G: {frets: [3, 2, 0, 0, 0, 3], fingers: ["3", "2", "", "", "", "4"]},
-    G7: {frets: [3, 2, 0, 0, 0, 1], fingers: ["3", "2", "", "", "", "1"]},
-    H: {base: 2, frets: ["x", 1, 3, 3, 3, 1], fingers: ["", "1", "3", "3", "3", "1"], barre: {fret: 1, from: 1, to: 5}},
-    Hm: {base: 2, frets: ["x", 1, 3, 3, 2, 1], fingers: ["", "1", "3", "4", "2", "1"], barre: {fret: 1, from: 1, to: 5}},
-    H7: {frets: ["x", 2, 1, 2, 0, 2], fingers: ["", "2", "1", "3", "", "4"]}
+    guitar: {
+        A: {frets: ["x", 0, 2, 2, 2, 0], fingers: ["", "", "1", "2", "3", ""]},
+        Am: {frets: ["x", 0, 2, 2, 1, 0], fingers: ["", "", "2", "3", "1", ""]},
+        A7: {frets: ["x", 0, 2, 0, 2, 0], fingers: ["", "", "2", "", "3", ""]},
+        B: {base: 2, frets: ["x", 1, 3, 3, 3, 1], fingers: ["", "1", "3", "3", "3", "1"], barre: {fret: 1, from: 1, to: 5}},
+        Bm: {base: 2, frets: ["x", 1, 3, 3, 2, 1], fingers: ["", "1", "3", "4", "2", "1"], barre: {fret: 1, from: 1, to: 5}},
+        B7: {frets: ["x", 2, 1, 2, 0, 2], fingers: ["", "2", "1", "3", "", "4"]},
+        C: {frets: ["x", 3, 2, 0, 1, 0], fingers: ["", "3", "2", "", "1", ""]},
+        C7: {frets: ["x", 3, 2, 3, 1, 0], fingers: ["", "3", "2", "4", "1", ""]},
+        D: {frets: ["x", "x", 0, 2, 3, 2], fingers: ["", "", "", "1", "3", "2"]},
+        Dm: {frets: ["x", "x", 0, 2, 3, 1], fingers: ["", "", "", "2", "3", "1"]},
+        D7: {frets: ["x", "x", 0, 2, 1, 2], fingers: ["", "", "", "2", "1", "3"]},
+        E: {frets: [0, 2, 2, 1, 0, 0], fingers: ["", "2", "3", "1", "", ""]},
+        Em: {frets: [0, 2, 2, 0, 0, 0], fingers: ["", "2", "3", "", "", ""]},
+        E7: {frets: [0, 2, 0, 1, 0, 0], fingers: ["", "2", "", "1", "", ""]},
+        F: {frets: [1, 3, 3, 2, 1, 1], fingers: ["1", "3", "4", "2", "1", "1"], barre: {fret: 1, from: 0, to: 5}},
+        Fm: {frets: [1, 3, 3, 1, 1, 1], fingers: ["1", "3", "4", "1", "1", "1"], barre: {fret: 1, from: 0, to: 5}},
+        F7: {frets: [1, 3, 1, 2, 1, 1], fingers: ["1", "3", "1", "2", "1", "1"], barre: {fret: 1, from: 0, to: 5}},
+        G: {frets: [3, 2, 0, 0, 0, 3], fingers: ["3", "2", "", "", "", "4"]},
+        G7: {frets: [3, 2, 0, 0, 0, 1], fingers: ["3", "2", "", "", "", "1"]},
+        H: {base: 2, frets: ["x", 1, 3, 3, 3, 1], fingers: ["", "1", "3", "3", "3", "1"], barre: {fret: 1, from: 1, to: 5}},
+        Hm: {base: 2, frets: ["x", 1, 3, 3, 2, 1], fingers: ["", "1", "3", "4", "2", "1"], barre: {fret: 1, from: 1, to: 5}},
+        H7: {frets: ["x", 2, 1, 2, 0, 2], fingers: ["", "2", "1", "3", "", "4"]}
+    },
+    ukulele: {
+        A: {frets: [2, 1, 0, 0], fingers: ["2", "1", "", ""]},
+        Am: {frets: [2, 0, 0, 0], fingers: ["2", "", "", ""]},
+        A7: {frets: [0, 1, 0, 0], fingers: ["", "1", "", ""]},
+        B: {frets: [4, 3, 2, 2], fingers: ["4", "3", "1", "1"], barre: {fret: 2, from: 2, to: 3}},
+        Bm: {frets: [4, 2, 2, 2], fingers: ["3", "1", "1", "1"], barre: {fret: 2, from: 1, to: 3}},
+        B7: {frets: [2, 3, 2, 2], fingers: ["1", "2", "1", "1"], barre: {fret: 2, from: 0, to: 3}},
+        C: {frets: [0, 0, 0, 3], fingers: ["", "", "", "3"]},
+        C7: {frets: [0, 0, 0, 1], fingers: ["", "", "", "1"]},
+        D: {frets: [2, 2, 2, 0], fingers: ["1", "2", "3", ""]},
+        Dm: {frets: [2, 2, 1, 0], fingers: ["2", "3", "1", ""]},
+        D7: {frets: [2, 2, 2, 3], fingers: ["1", "1", "1", "2"], barre: {fret: 2, from: 0, to: 2}},
+        E: {frets: [1, 4, 0, 2], fingers: ["1", "4", "", "2"]},
+        Em: {frets: [0, 4, 3, 2], fingers: ["", "3", "2", "1"]},
+        E7: {frets: [1, 2, 0, 2], fingers: ["1", "2", "", "3"]},
+        F: {frets: [2, 0, 1, 0], fingers: ["2", "", "1", ""]},
+        Fm: {frets: [1, 0, 1, 3], fingers: ["1", "", "2", "4"]},
+        F7: {frets: [2, 3, 1, 3], fingers: ["2", "3", "1", "4"]},
+        G: {frets: [0, 2, 3, 2], fingers: ["", "1", "3", "2"]},
+        G7: {frets: [0, 2, 1, 2], fingers: ["", "2", "1", "3"]},
+        H: {frets: [4, 3, 2, 2], fingers: ["4", "3", "1", "1"], barre: {fret: 2, from: 2, to: 3}},
+        Hm: {frets: [4, 2, 2, 2], fingers: ["3", "1", "1", "1"], barre: {fret: 2, from: 1, to: 3}},
+        H7: {frets: [2, 3, 2, 2], fingers: ["1", "2", "1", "1"], barre: {fret: 2, from: 0, to: 3}}
+    }
 };
 
 const els = {
@@ -236,12 +263,39 @@ function renderChordPanel() {
         return;
     }
     els.chordPanel.hidden = false;
+    const header = document.createElement("div");
+    header.className = "chord-panel__header";
     const title = document.createElement("h2");
     title.textContent = "Аккорды";
+    header.append(title, createInstrumentToggle());
     const grid = document.createElement("div");
     grid.className = "chord-panel__grid";
     grid.replaceChildren(...chordNames.map(symbol => createChordDiagram(symbol)));
-    els.chordPanel.replaceChildren(title, grid);
+    els.chordPanel.replaceChildren(header, grid);
+}
+
+function createInstrumentToggle() {
+    const toggle = document.createElement("div");
+    toggle.className = "instrument-toggle";
+    toggle.setAttribute("role", "group");
+    toggle.setAttribute("aria-label", "Аппликатуры");
+    [
+        ["guitar", "Гитара"],
+        ["ukulele", "Укулеле"]
+    ].forEach(([value, label]) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = label;
+        button.className = state.diagramInstrument === value ? "active" : "";
+        button.setAttribute("aria-pressed", String(state.diagramInstrument === value));
+        button.addEventListener("click", () => {
+            state.diagramInstrument = value;
+            localStorage.setItem("diagramInstrument", value);
+            renderChordPanel();
+        });
+        toggle.append(button);
+    });
+    return toggle;
 }
 
 function uniqueChordSymbols(chords) {
@@ -268,7 +322,7 @@ function createChordDiagram(symbol) {
     const name = document.createElement("h3");
     name.textContent = symbol;
     const normalized = normalizeChordSymbol(symbol);
-    const diagram = CHORD_DIAGRAMS[normalized] || null;
+    const diagram = CHORD_DIAGRAMS[state.diagramInstrument][normalized] || null;
     const svg = diagram ? renderChordSvg(diagram) : renderUnknownChordSvg();
     card.append(name, svg);
     return card;
@@ -281,20 +335,24 @@ function renderChordSvg(diagram) {
         role: "img",
         "aria-label": "Схема аккорда"
     });
-    const stringXs = [18, 37, 56, 75, 94, 113];
+    const stringCount = diagram.frets.length;
+    const firstStringX = stringCount === 4 ? 36 : 18;
+    const lastStringX = stringCount === 4 ? 96 : 113;
+    const stringStep = (lastStringX - firstStringX) / (stringCount - 1);
+    const stringXs = Array.from({length: stringCount}, (_, index) => firstStringX + index * stringStep);
     const fretYs = [41, 62, 83, 104, 125];
     const topY = 20;
     const bottomY = 125;
     const base = diagram.base || 1;
 
     if (base === 1) {
-        svg.append(createSvgElement("line", {class: "chord-diagram__nut", x1: 18, y1: topY, x2: 113, y2: topY}));
+        svg.append(createSvgElement("line", {class: "chord-diagram__nut", x1: firstStringX, y1: topY, x2: lastStringX, y2: topY}));
     } else {
         svg.append(createSvgElement("text", {class: "chord-diagram__base", x: 4, y: 47}, `${base}fr`));
-        svg.append(createSvgElement("line", {class: "chord-diagram__fret", x1: 18, y1: topY, x2: 113, y2: topY}));
+        svg.append(createSvgElement("line", {class: "chord-diagram__fret", x1: firstStringX, y1: topY, x2: lastStringX, y2: topY}));
     }
     stringXs.forEach(x => svg.append(createSvgElement("line", {class: "chord-diagram__string", x1: x, y1: topY, x2: x, y2: bottomY})));
-    fretYs.forEach(y => svg.append(createSvgElement("line", {class: "chord-diagram__fret", x1: 18, y1: y, x2: 113, y2: y})));
+    fretYs.forEach(y => svg.append(createSvgElement("line", {class: "chord-diagram__fret", x1: firstStringX, y1: y, x2: lastStringX, y2: y})));
 
     if (diagram.barre) {
         const y = fretCenterY(diagram.barre.fret);
@@ -667,6 +725,10 @@ async function saveSong(event) {
 
 async function deleteSong() {
     if (!state.selected) {
+        return;
+    }
+    const title = state.selected.title || "эту песню";
+    if (!confirm(`Удалить «${title}»? Это действие нельзя отменить.`)) {
         return;
     }
     await api(`/api/songs/${state.selected.id}`, {method: "DELETE"});
