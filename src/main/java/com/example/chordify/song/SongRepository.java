@@ -26,6 +26,7 @@ public class SongRepository {
                 SELECT s.id, s.title, s.artist, COUNT(c.id) AS chord_count, s.updated_at
                 FROM songs s
                 LEFT JOIN chords c ON c.song_id = s.id
+                WHERE s.deleted_at IS NULL
                 GROUP BY s.id
                 ORDER BY lower(s.title)
                 """, (rs, rowNum) -> new SongSummary(
@@ -42,7 +43,7 @@ public class SongRepository {
             Song song = jdbcTemplate.queryForObject("""
                     SELECT id, title, artist, body, created_at, updated_at
                     FROM songs
-                    WHERE id = ?
+                    WHERE id = ? AND deleted_at IS NULL
                     """, (rs, rowNum) -> new Song(
                     rs.getLong("id"),
                     rs.getString("title"),
@@ -96,7 +97,12 @@ public class SongRepository {
 
     @Transactional
     public boolean delete(long id) {
-        return jdbcTemplate.update("DELETE FROM songs WHERE id = ?", id) > 0;
+        String now = Instant.now().toString();
+        return jdbcTemplate.update("""
+                UPDATE songs
+                SET deleted_at = ?, updated_at = ?
+                WHERE id = ? AND deleted_at IS NULL
+                """, now, now, id) > 0;
     }
 
     private List<ChordPosition> findChords(long songId) {

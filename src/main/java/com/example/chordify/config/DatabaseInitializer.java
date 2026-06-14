@@ -27,9 +27,13 @@ public class DatabaseInitializer {
                     artist TEXT,
                     body TEXT NOT NULL,
                     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    deleted_at TEXT
                 )
                 """);
+        if (!hasColumn("songs", "deleted_at")) {
+            jdbcTemplate.execute("ALTER TABLE songs ADD COLUMN deleted_at TEXT");
+        }
         jdbcTemplate.execute("""
                 CREATE TABLE IF NOT EXISTS chords (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -47,5 +51,10 @@ public class DatabaseInitializer {
                 CREATE INDEX IF NOT EXISTS idx_chords_song_position
                 ON chords(song_id, line_index, char_index, sort_order)
                 """);
+    }
+
+    private boolean hasColumn(String tableName, String columnName) {
+        return jdbcTemplate.queryForList("PRAGMA table_info(" + tableName + ")").stream()
+                .anyMatch(column -> columnName.equals(column.get("name")));
     }
 }
