@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Chordify</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<main class="app">
+    <aside class="library" aria-label="Библиотека песен">
+        <div class="library__header">
+            <h1>Chordify</h1>
+            <button id="newSongButton" class="icon-button" type="button" title="Новая песня">+</button>
+        </div>
+        <input id="searchInput" class="search" type="search" placeholder="Поиск">
+        <ul id="songList" class="song-list"></ul>
+    </aside>
+
+    <section class="viewer" aria-label="Просмотр песни">
+        <header class="viewer__header">
+            <div>
+                <p id="artistLabel" class="artist"></p>
+                <h2 id="songTitle">Новая песня</h2>
+            </div>
+            <button id="deleteButton" class="danger" type="button">Удалить</button>
+        </header>
+        <div id="songView" class="song-view"></div>
+    </section>
+
+    <section class="editor" aria-label="Редактор песни">
+        <form id="songForm">
+            <label>
+                Название
+                <input id="titleInput" name="title" required autocomplete="off">
+            </label>
+            <label>
+                Исполнитель
+                <input id="artistInput" name="artist" autocomplete="off">
+            </label>
+            <label>
+                Текст
+                <textarea id="bodyInput" name="body" spellcheck="false"></textarea>
+            </label>
+            <div class="chord-toolbar">
+                <input id="chordInput" aria-label="Аккорд" placeholder="Am">
+                <button id="addChordButton" type="button">Поставить</button>
+            </div>
+            <ol id="chordList" class="chord-list"></ol>
+            <button class="primary" type="submit">Сохранить</button>
+            <p id="statusLine" class="status" role="status"></p>
+        </form>
+    </section>
+</main>
+<script src="/app.js"></script>
+</body>
+</html>
