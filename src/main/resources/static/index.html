@@ -16,6 +16,12 @@
                 <h1 id="songTitle">Chordify</h1>
             </div>
             <div class="topbar__actions">
+                <div id="transposeControls" class="transpose-controls" aria-label="Транспонирование" hidden>
+                    <button id="transposeDownButton" class="secondary" type="button" title="На полтона ниже">−</button>
+                    <output id="transposeLabel" class="transpose-label" aria-live="polite">0</output>
+                    <button id="transposeResetButton" class="secondary" type="button" title="Сбросить транспонирование">0</button>
+                    <button id="transposeUpButton" class="secondary" type="button" title="На полтона выше">+</button>
+                </div>
                 <div id="autoscrollControls" class="autoscroll-controls" aria-label="Автопрокрутка" hidden>
                     <label class="speed-control">
                         <span>Скорость</span>
@@ -87,6 +93,6 @@
         </section>
     </aside>
 </main>
-<script src="app.js?v=15"></script>
+<script src="app.js?v=16"></script>
 </body>
 </html>

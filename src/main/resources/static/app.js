@@ -9,11 +9,35 @@ const state = {
     autoscrollFrame: null,
     autoscrollLastTime: null,
     autoscrollRemainder: 0,
-    autoscrollHasLeftTop: false
+    autoscrollHasLeftTop: false,
+    transposeSteps: 0
 };
 
 const API_BASE = location.protocol === "file:" ? "http://127.0.0.1:8080" : "";
 const TAB_SIZE = 4;
+const CHROMATIC_SHARP = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "H"];
+const CHROMATIC_SHARP_B = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const CHROMATIC_FLAT = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+const NOTE_INDEX = new Map([
+    ["C", 0],
+    ["C#", 1],
+    ["Db", 1],
+    ["D", 2],
+    ["D#", 3],
+    ["Eb", 3],
+    ["E", 4],
+    ["F", 5],
+    ["F#", 6],
+    ["Gb", 6],
+    ["G", 7],
+    ["G#", 8],
+    ["Ab", 8],
+    ["A", 9],
+    ["A#", 10],
+    ["Bb", 10],
+    ["B", 11],
+    ["H", 11]
+]);
 const CHORD_DIAGRAMS = {
     guitar: {
         A: {frets: ["x", 0, 2, 2, 2, 0], fingers: ["", "", "1", "2", "3", ""]},
@@ -94,7 +118,12 @@ const els = {
     deleteButton: document.querySelector("#deleteButton"),
     autoscrollControls: document.querySelector("#autoscrollControls"),
     autoscrollSpeed: document.querySelector("#autoscrollSpeed"),
-    autoscrollButton: document.querySelector("#autoscrollButton")
+    autoscrollButton: document.querySelector("#autoscrollButton"),
+    transposeControls: document.querySelector("#transposeControls"),
+    transposeDownButton: document.querySelector("#transposeDownButton"),
+    transposeResetButton: document.querySelector("#transposeResetButton"),
+    transposeUpButton: document.querySelector("#transposeUpButton"),
+    transposeLabel: document.querySelector("#transposeLabel")
 };
 
 async function api(path, options = {}) {
@@ -149,6 +178,7 @@ function renderSongList() {
 
 async function selectSong(id) {
     stopAutoscroll();
+    resetTranspose();
     state.selected = await api(`/api/songs/${id}`);
     state.chords = state.selected.chords.map(chord => ({...chord}));
     fillForm(state.selected);
@@ -177,6 +207,7 @@ function openEditor({isNew}) {
     stopAutoscroll();
     state.editingExisting = !isNew;
     if (isNew) {
+        resetTranspose();
         state.selected = null;
         state.chords = [];
         fillForm({title: "", artist: "", body: ""});
@@ -212,10 +243,12 @@ function renderAll() {
     els.editButton.hidden = !hasSelection;
     els.deleteButton.hidden = !hasSelection;
     els.autoscrollControls.hidden = !hasSelection;
+    els.transposeControls.hidden = !hasSelection;
     renderSongList();
     renderSongView();
     renderChordPanel();
     updateAutoscrollControls();
+    updateTransposeControls();
 }
 
 function renderSongView() {
@@ -255,7 +288,7 @@ function renderLine(line, chords) {
     chords.forEach(chord => {
         const span = document.createElement("span");
         span.className = "chord-token";
-        span.textContent = chord.symbol;
+        span.textContent = transposeChordSymbol(chord.symbol, state.transposeSteps);
         span.style.gridColumn = `${chord.charIndex + 1}`;
         grid.append(span);
     });
@@ -269,7 +302,10 @@ function renderChordPanel() {
         els.chordPanel.replaceChildren();
         return;
     }
-    const chordNames = uniqueChordSymbols(state.selected.chords);
+    const chordNames = uniqueChordSymbols(state.selected.chords.map(chord => ({
+        ...chord,
+        symbol: transposeChordSymbol(chord.symbol, state.transposeSteps)
+    })));
     if (chordNames.length === 0) {
         els.chordPanel.hidden = true;
         els.chordPanel.replaceChildren();
@@ -327,6 +363,65 @@ function uniqueChordSymbols(chords) {
 
 function normalizeChordSymbol(symbol) {
     return symbol.replace(/\/[A-GH][#b]?$/, "");
+}
+
+function transposeBySteps(steps) {
+    state.transposeSteps = clampTransposeSteps(state.transposeSteps + steps);
+    renderSongView();
+    renderChordPanel();
+    updateTransposeControls();
+}
+
+function resetTranspose() {
+    state.transposeSteps = 0;
+    updateTransposeControls();
+}
+
+function updateTransposeControls() {
+    if (!els.transposeLabel) {
+        return;
+    }
+    const steps = state.transposeSteps;
+    els.transposeLabel.value = steps > 0 ? `+${steps}` : String(steps);
+    els.transposeResetButton.disabled = steps === 0;
+}
+
+function clampTransposeSteps(steps) {
+    if (steps > 11) {
+        return steps - 12;
+    }
+    if (steps < -11) {
+        return steps + 12;
+    }
+    return steps;
+}
+
+function transposeChordSymbol(symbol, steps) {
+    if (!steps || typeof symbol !== "string") {
+        return symbol;
+    }
+    const match = symbol.match(/^([A-GH][#b]?)([^/]*)(?:\/([A-GH][#b]?))?$/);
+    if (!match) {
+        return symbol;
+    }
+    const [, root, suffix, bass] = match;
+    const transposedRoot = transposeNote(root, steps, symbol);
+    const transposedBass = bass ? transposeNote(bass, steps, symbol) : "";
+    if (!transposedRoot || bass && !transposedBass) {
+        return symbol;
+    }
+    return `${transposedRoot}${suffix}${bass ? `/${transposedBass}` : ""}`;
+}
+
+function transposeNote(note, steps, context) {
+    const index = NOTE_INDEX.get(note);
+    if (index === undefined) {
+        return null;
+    }
+    const scale = note.includes("b")
+        ? CHROMATIC_FLAT
+        : context.includes("B") && !context.includes("H") ? CHROMATIC_SHARP_B : CHROMATIC_SHARP;
+    return scale[(index + steps + 120) % 12];
 }
 
 function createChordDiagram(symbol) {
@@ -726,6 +821,7 @@ async function saveSong(event) {
         const saved = state.editingExisting && state.selected
             ? await api(`/api/songs/${state.selected.id}`, {method: "PUT", body: JSON.stringify(payload)})
             : await api("/api/songs", {method: "POST", body: JSON.stringify(payload)});
+        resetTranspose();
         state.selected = saved;
         state.chords = saved.chords.map(chord => ({...chord}));
         await loadSongs(false);
@@ -746,6 +842,7 @@ async function deleteSong() {
         return;
     }
     await api(`/api/songs/${state.selected.id}`, {method: "DELETE"});
+    resetTranspose();
     state.selected = null;
     state.chords = [];
     fillForm({title: "", artist: "", body: ""});
@@ -869,6 +966,9 @@ els.addLineButton.addEventListener("click", () => addEditorLineAfter());
 els.parseSongButton.addEventListener("click", parseSongText);
 els.songForm.addEventListener("submit", saveSong);
 els.deleteButton.addEventListener("click", deleteSong);
+els.transposeDownButton.addEventListener("click", () => transposeBySteps(-1));
+els.transposeResetButton.addEventListener("click", () => transposeBySteps(-state.transposeSteps));
+els.transposeUpButton.addEventListener("click", () => transposeBySteps(1));
 els.autoscrollButton.addEventListener("click", toggleAutoscroll);
 els.autoscrollSpeed.addEventListener("input", updateAutoscrollSpeed);
 els.autoscrollSpeed.addEventListener("change", updateAutoscrollSpeed);

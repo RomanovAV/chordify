@@ -51,6 +51,17 @@ button:hover {
     color: var(--accent-strong);
 }
 
+button:disabled {
+    color: var(--muted);
+    cursor: default;
+    opacity: 0.48;
+}
+
+button:disabled:hover {
+    border-color: var(--line);
+    color: var(--muted);
+}
+
 h1,
 h2,
 p {
@@ -124,13 +135,34 @@ h2 {
     padding: 5px;
 }
 
+.transpose-controls {
+    align-items: center;
+    border: 1px dashed var(--line);
+    display: grid;
+    gap: 5px;
+    grid-template-columns: 34px minmax(42px, auto) 34px 34px;
+    min-height: 34px;
+    padding: 5px;
+}
+
 .autoscroll-controls[hidden] {
+    display: none;
+}
+
+.transpose-controls[hidden] {
     display: none;
 }
 
 .autoscroll-controls--active {
     border-color: rgb(33 196 141 / 58%);
     background: rgb(33 196 141 / 7%);
+}
+
+.transpose-label {
+    color: var(--accent-strong);
+    font-size: 14px;
+    min-width: 42px;
+    text-align: center;
 }
 
 .speed-control {
@@ -675,6 +707,11 @@ textarea {
     .autoscroll-controls {
         grid-column: 1 / -1;
         justify-content: space-between;
+    }
+
+    .transpose-controls {
+        grid-column: 1 / -1;
+        grid-template-columns: 40px minmax(48px, 1fr) 40px 40px;
     }
 
     .speed-control {
