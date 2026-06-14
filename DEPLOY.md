@@ -51,13 +51,13 @@ nano .env
 
 Set a strong `CHORDIFY_PASSWORD`.
 
-## 4. Start
+## 4. Start the app
 
 ```sh
 docker compose up --build -d
 ```
 
-The app listens only on `127.0.0.1:8080` inside the VDS. It is not exposed directly to the internet.
+The app listens only on `127.0.0.1:8080` inside the VDS. Caddy will expose it to the internet over HTTPS.
 
 For local testing through SSH:
 
@@ -66,6 +66,56 @@ ssh -L 8080:127.0.0.1:8080 root@SERVER_IP
 ```
 
 Then open `http://localhost:8080` on your machine and sign in with the credentials from `.env`.
+
+## 5. Open it from the internet
+
+Point your domain DNS `A` record to `SERVER_IP`.
+
+Install Caddy:
+
+```sh
+apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' > /etc/apt/sources.list.d/caddy-stable.list
+apt update
+apt install -y caddy
+```
+
+Create the site config:
+
+```sh
+nano /etc/caddy/Caddyfile
+```
+
+Use this config:
+
+```caddyfile
+YOUR_DOMAIN {
+    reverse_proxy 127.0.0.1:8080
+}
+```
+
+Reload Caddy:
+
+```sh
+caddy fmt --overwrite /etc/caddy/Caddyfile
+systemctl reload caddy
+```
+
+If `ufw` is enabled, open HTTP and HTTPS:
+
+```sh
+ufw allow 80/tcp
+ufw allow 443/tcp
+```
+
+Open:
+
+```text
+https://YOUR_DOMAIN
+```
+
+Caddy will request and renew the HTTPS certificate automatically.
 
 Logs:
 
@@ -79,7 +129,7 @@ Stop:
 docker compose down
 ```
 
-## 5. Data
+## 6. Data
 
 The app uses SQLite. The database is stored in the Docker volume:
 
@@ -89,7 +139,7 @@ chordify_chordify-data
 
 Do not run `docker compose down -v` unless you want to delete the database.
 
-## 6. Update
+## 7. Update
 
 ```sh
 cd /root/chordify
@@ -103,7 +153,7 @@ If you uploaded files with `rsync`, upload them again and run:
 docker compose up --build -d
 ```
 
-## 7. Backup SQLite
+## 8. Backup SQLite
 
 ```sh
 mkdir -p ~/chordify-backups
@@ -111,12 +161,4 @@ docker run --rm \
   -v chordify_chordify-data:/data \
   -v ~/chordify-backups:/backup \
   alpine sh -c 'cp /data/chordify.sqlite3 /backup/chordify-$(date +%F-%H%M%S).sqlite3'
-```
-
-## Optional: domain and HTTPS
-
-If you want `https://YOUR_DOMAIN`, put Nginx or Caddy in front of the app and proxy traffic to:
-
-```text
-http://127.0.0.1:8080
 ```
