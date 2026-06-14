@@ -3,7 +3,13 @@ const state = {
     selected: null,
     chords: [],
     editingExisting: false,
-    diagramInstrument: localStorage.getItem("diagramInstrument") || "guitar"
+    diagramInstrument: localStorage.getItem("diagramInstrument") || "guitar",
+    autoscrollSpeed: Math.min(Math.max(Number(localStorage.getItem("autoscrollSpeed")) || 45, 1), 400),
+    autoscrollActive: false,
+    autoscrollFrame: null,
+    autoscrollLastTime: null,
+    autoscrollRemainder: 0,
+    autoscrollHasLeftTop: false
 };
 
 const API_BASE = location.protocol === "file:" ? "http://127.0.0.1:8080" : "";
@@ -85,7 +91,10 @@ const els = {
     songForm: document.querySelector("#songForm"),
     addLineButton: document.querySelector("#addLineButton"),
     parseSongButton: document.querySelector("#parseSongButton"),
-    deleteButton: document.querySelector("#deleteButton")
+    deleteButton: document.querySelector("#deleteButton"),
+    autoscrollControls: document.querySelector("#autoscrollControls"),
+    autoscrollSpeed: document.querySelector("#autoscrollSpeed"),
+    autoscrollButton: document.querySelector("#autoscrollButton")
 };
 
 async function api(path, options = {}) {
@@ -139,6 +148,7 @@ function renderSongList() {
 }
 
 async function selectSong(id) {
+    stopAutoscroll();
     state.selected = await api(`/api/songs/${id}`);
     state.chords = state.selected.chords.map(chord => ({...chord}));
     fillForm(state.selected);
@@ -164,6 +174,7 @@ function closeLibrary() {
 }
 
 function openEditor({isNew}) {
+    stopAutoscroll();
     state.editingExisting = !isNew;
     if (isNew) {
         state.selected = null;
@@ -200,9 +211,11 @@ function renderAll() {
     els.songWorkspace.classList.toggle("song-workspace--no-chords", !hasSelection || state.selected.chords.length === 0);
     els.editButton.hidden = !hasSelection;
     els.deleteButton.hidden = !hasSelection;
+    els.autoscrollControls.hidden = !hasSelection;
     renderSongList();
     renderSongView();
     renderChordPanel();
+    updateAutoscrollControls();
 }
 
 function renderSongView() {
@@ -724,6 +737,7 @@ async function saveSong(event) {
 }
 
 async function deleteSong() {
+    stopAutoscroll();
     if (!state.selected) {
         return;
     }
@@ -743,6 +757,105 @@ function setStatus(message) {
     els.statusLine.textContent = message;
 }
 
+function toggleAutoscroll() {
+    if (state.autoscrollActive) {
+        stopAutoscroll();
+        return;
+    }
+    startAutoscroll();
+}
+
+function startAutoscroll() {
+    if (!state.selected || isPageAtBottom()) {
+        return;
+    }
+    state.autoscrollActive = true;
+    state.autoscrollLastTime = null;
+    state.autoscrollRemainder = 0;
+    state.autoscrollHasLeftTop = !isPageAtTop();
+    updateAutoscrollControls();
+    state.autoscrollFrame = requestAnimationFrame(stepAutoscroll);
+}
+
+function stopAutoscroll() {
+    if (state.autoscrollFrame !== null) {
+        cancelAnimationFrame(state.autoscrollFrame);
+    }
+    state.autoscrollActive = false;
+    state.autoscrollFrame = null;
+    state.autoscrollLastTime = null;
+    state.autoscrollRemainder = 0;
+    state.autoscrollHasLeftTop = false;
+    updateAutoscrollControls();
+}
+
+function stepAutoscroll(timestamp) {
+    if (!state.autoscrollActive) {
+        return;
+    }
+    if (state.autoscrollLastTime === null) {
+        state.autoscrollLastTime = timestamp;
+    }
+    const elapsedSeconds = (timestamp - state.autoscrollLastTime) / 1000;
+    state.autoscrollLastTime = timestamp;
+    const distance = state.autoscrollSpeed * elapsedSeconds + state.autoscrollRemainder;
+    const wholePixels = Math.trunc(distance);
+    state.autoscrollRemainder = distance - wholePixels;
+
+    if (wholePixels > 0) {
+        window.scrollBy(0, wholePixels);
+        if (!isPageAtTop()) {
+            state.autoscrollHasLeftTop = true;
+        }
+    }
+
+    if (isPageAtBottom()) {
+        stopAutoscroll();
+        return;
+    }
+    state.autoscrollFrame = requestAnimationFrame(stepAutoscroll);
+}
+
+function updateAutoscrollSpeed() {
+    const speed = Number(els.autoscrollSpeed.value);
+    if (!Number.isFinite(speed)) {
+        return;
+    }
+    state.autoscrollSpeed = Math.min(Math.max(Math.round(speed), 1), 400);
+    localStorage.setItem("autoscrollSpeed", String(state.autoscrollSpeed));
+    updateAutoscrollControls();
+}
+
+function updateAutoscrollControls() {
+    if (!els.autoscrollButton) {
+        return;
+    }
+    els.autoscrollSpeed.value = String(state.autoscrollSpeed);
+    els.autoscrollButton.textContent = state.autoscrollActive ? "Стоп" : "Пуск";
+    els.autoscrollButton.setAttribute("aria-pressed", String(state.autoscrollActive));
+    els.autoscrollControls.classList.toggle("autoscroll-controls--active", state.autoscrollActive);
+}
+
+function handleAutoscrollBoundaryScroll() {
+    if (!state.autoscrollActive) {
+        return;
+    }
+    if (!isPageAtTop()) {
+        state.autoscrollHasLeftTop = true;
+    }
+    if (isPageAtBottom() || state.autoscrollHasLeftTop && isPageAtTop()) {
+        stopAutoscroll();
+    }
+}
+
+function isPageAtTop() {
+    return window.scrollY <= 0;
+}
+
+function isPageAtBottom() {
+    return window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 1;
+}
+
 els.openLibraryButton.addEventListener("click", openLibrary);
 els.closeLibraryButton.addEventListener("click", closeLibrary);
 els.libraryPanel.querySelector("[data-close-library]").addEventListener("click", closeLibrary);
@@ -756,6 +869,11 @@ els.addLineButton.addEventListener("click", () => addEditorLineAfter());
 els.parseSongButton.addEventListener("click", parseSongText);
 els.songForm.addEventListener("submit", saveSong);
 els.deleteButton.addEventListener("click", deleteSong);
+els.autoscrollButton.addEventListener("click", toggleAutoscroll);
+els.autoscrollSpeed.addEventListener("input", updateAutoscrollSpeed);
+els.autoscrollSpeed.addEventListener("change", updateAutoscrollSpeed);
+window.addEventListener("scroll", handleAutoscrollBoundaryScroll, {passive: true});
+window.addEventListener("beforeunload", stopAutoscroll);
 
 loadSongs().then(() => {
     renderAll();

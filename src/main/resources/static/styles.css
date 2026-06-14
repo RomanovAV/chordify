@@ -31,7 +31,8 @@ body {
 
 button,
 input,
-textarea {
+textarea,
+output {
     font: inherit;
 }
 
@@ -108,7 +109,48 @@ h2 {
 
 .topbar__actions {
     display: flex;
+    align-items: start;
+    flex-wrap: wrap;
     gap: 8px;
+    justify-content: end;
+}
+
+.autoscroll-controls {
+    align-items: center;
+    border: 1px dashed var(--line);
+    display: flex;
+    gap: 8px;
+    min-height: 34px;
+    padding: 5px;
+}
+
+.autoscroll-controls[hidden] {
+    display: none;
+}
+
+.autoscroll-controls--active {
+    border-color: rgb(33 196 141 / 58%);
+    background: rgb(33 196 141 / 7%);
+}
+
+.speed-control {
+    align-items: center;
+    display: grid;
+    gap: 6px;
+    grid-template-columns: auto 72px auto;
+    min-width: 0;
+}
+
+.speed-control span,
+.speed-control__unit {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.speed-control input {
+    height: 30px;
+    padding: 5px 7px;
+    text-align: right;
 }
 
 .secondary {
@@ -627,6 +669,17 @@ textarea {
     .topbar__actions {
         display: grid;
         grid-template-columns: 1fr 1fr;
+        justify-content: stretch;
+    }
+
+    .autoscroll-controls {
+        grid-column: 1 / -1;
+        justify-content: space-between;
+    }
+
+    .speed-control {
+        grid-template-columns: auto minmax(76px, 1fr) auto;
+        width: 100%;
     }
 
     .song-workspace {

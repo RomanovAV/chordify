@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chordify</title>
-    <link rel="stylesheet" href="styles.css?v=10">
+    <link rel="stylesheet" href="styles.css?v=11">
 </head>
 <body>
 <main class="app">
@@ -16,8 +16,16 @@
                 <h1 id="songTitle">Chordify</h1>
             </div>
             <div class="topbar__actions">
-                <button id="editButton" class="secondary" type="button">Редактировать</button>
-                <button id="deleteButton" class="danger" type="button">Удалить</button>
+                <div id="autoscrollControls" class="autoscroll-controls" aria-label="Автопрокрутка" hidden>
+                    <label class="speed-control">
+                        <span>Скорость</span>
+                        <input id="autoscrollSpeed" type="number" min="1" max="400" step="1" value="45" inputmode="numeric">
+                        <span class="speed-control__unit">px/s</span>
+                    </label>
+                    <button id="autoscrollButton" class="secondary" type="button" aria-pressed="false">Пуск</button>
+                </div>
+                <button id="editButton" class="secondary" type="button" hidden>Редактировать</button>
+                <button id="deleteButton" class="danger" type="button" hidden>Удалить</button>
             </div>
         </header>
         <div id="emptyState" class="empty-state">
@@ -79,6 +87,6 @@
         </section>
     </aside>
 </main>
-<script src="app.js?v=14"></script>
+<script src="app.js?v=15"></script>
 </body>
 </html>
