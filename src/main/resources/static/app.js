@@ -5,6 +5,9 @@ const state = {
     editingExisting: false
 };
 
+const API_BASE = location.protocol === "file:" ? "http://127.0.0.1:8080" : "";
+const TAB_SIZE = 4;
+
 const els = {
     openLibraryButton: document.querySelector("#openLibraryButton"),
     closeLibraryButton: document.querySelector("#closeLibraryButton"),
@@ -29,14 +32,20 @@ const els = {
     statusLine: document.querySelector("#statusLine"),
     songForm: document.querySelector("#songForm"),
     addChordButton: document.querySelector("#addChordButton"),
+    parseSongButton: document.querySelector("#parseSongButton"),
     deleteButton: document.querySelector("#deleteButton")
 };
 
 async function api(path, options = {}) {
-    const response = await fetch(path, {
-        headers: {"Content-Type": "application/json"},
-        ...options
-    });
+    let response;
+    try {
+        response = await fetch(`${API_BASE}${path}`, {
+            headers: {"Content-Type": "application/json"},
+            ...options
+        });
+    } catch (error) {
+        throw new Error("Не удалось связаться с сервером. Откройте http://localhost:8080 или запустите Spring Boot.");
+    }
     if (!response.ok) {
         const payload = await response.json().catch(() => ({}));
         throw new Error(payload.error || "Ошибка запроса");
@@ -238,6 +247,183 @@ function addChord() {
     els.bodyInput.focus();
 }
 
+function handleBodyKeydown(event) {
+    if (event.key !== "Tab") {
+        return;
+    }
+    event.preventDefault();
+    if (event.shiftKey) {
+        outdentSelection(els.bodyInput);
+    } else {
+        indentSelection(els.bodyInput);
+    }
+    syncChordsWithBody();
+}
+
+function indentSelection(textarea) {
+    const {selectionStart, selectionEnd, value} = textarea;
+    if (selectionStart === selectionEnd) {
+        textarea.setRangeText("\t", selectionStart, selectionEnd, "end");
+        return;
+    }
+    const lineStart = value.lastIndexOf("\n", selectionStart - 1) + 1;
+    const selected = value.slice(lineStart, selectionEnd);
+    const indented = selected.replace(/^/gm, "\t");
+    textarea.setRangeText(indented, lineStart, selectionEnd, "select");
+    textarea.selectionStart = lineStart;
+    textarea.selectionEnd = lineStart + indented.length;
+}
+
+function outdentSelection(textarea) {
+    const {selectionStart, selectionEnd, value} = textarea;
+    const lineStart = value.lastIndexOf("\n", selectionStart - 1) + 1;
+    const selected = value.slice(lineStart, selectionEnd);
+    const outdented = selected.replace(/^(\t| {1,4})/gm, "");
+    textarea.setRangeText(outdented, lineStart, selectionEnd, "select");
+    textarea.selectionStart = lineStart;
+    textarea.selectionEnd = lineStart + outdented.length;
+}
+
+function parseSongText() {
+    const parsed = parseChordText(els.bodyInput.value);
+    els.bodyInput.value = parsed.body;
+    state.chords = parsed.chords;
+    renderChordList();
+    setStatus(parsed.chords.length > 0
+        ? `Найдено аккордов: ${parsed.chords.length}`
+        : "Аккорды не найдены");
+    els.bodyInput.focus();
+}
+
+function parseChordText(source) {
+    const normalized = source.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    const lines = normalized.split("\n");
+    const bodyLines = [];
+    const chords = [];
+    let pendingChordLine = null;
+
+    lines.forEach(line => {
+        const expandedLine = expandTabs(line);
+        if (isChordOnlyLine(expandedLine)) {
+            pendingChordLine = expandedLine;
+            return;
+        }
+
+        const inline = parseInlineChordLine(expandedLine);
+        const lineIndex = bodyLines.length;
+        bodyLines.push(inline.text);
+        inline.chords.forEach(chord => {
+            chords.push({
+                id: null,
+                lineIndex,
+                charIndex: chord.charIndex,
+                symbol: chord.symbol,
+                sortOrder: chords.length
+            });
+        });
+
+        if (pendingChordLine !== null) {
+            extractChordLinePositions(pendingChordLine, inline.text).forEach(chord => {
+                chords.push({
+                    id: null,
+                    lineIndex,
+                    charIndex: chord.charIndex,
+                    symbol: chord.symbol,
+                    sortOrder: chords.length
+                });
+            });
+            pendingChordLine = null;
+        }
+    });
+
+    if (pendingChordLine !== null) {
+        bodyLines.push("");
+        extractChordLinePositions(pendingChordLine, "").forEach(chord => {
+            chords.push({
+                id: null,
+                lineIndex: bodyLines.length - 1,
+                charIndex: chord.charIndex,
+                symbol: chord.symbol,
+                sortOrder: chords.length
+            });
+        });
+    }
+
+    chords.sort((a, b) => a.lineIndex - b.lineIndex || a.charIndex - b.charIndex || a.sortOrder - b.sortOrder);
+    return {
+        body: bodyLines.join("\n"),
+        chords: chords.map((chord, index) => ({...chord, sortOrder: index}))
+    };
+}
+
+function parseInlineChordLine(line) {
+    const chords = [];
+    let text = "";
+    let sourceIndex = 0;
+    const inlineChord = /\[([A-GH][#b]?(?:m|maj|min|dim|aug|sus|add)?\d*(?:\/[A-GH][#b]?)?)\]/g;
+    let match = inlineChord.exec(line);
+    while (match !== null) {
+        text += line.slice(sourceIndex, match.index);
+        chords.push({
+            symbol: match[1],
+            charIndex: text.length
+        });
+        sourceIndex = match.index + match[0].length;
+        match = inlineChord.exec(line);
+    }
+    text += line.slice(sourceIndex);
+    return {text, chords};
+}
+
+function expandTabs(line) {
+    let column = 0;
+    let expanded = "";
+    for (const char of line) {
+        if (char === "\t") {
+            const spaces = TAB_SIZE - column % TAB_SIZE;
+            expanded += " ".repeat(spaces);
+            column += spaces;
+        } else {
+            expanded += char;
+            column += 1;
+        }
+    }
+    return expanded;
+}
+
+function isChordOnlyLine(line) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+        return false;
+    }
+    const tokens = trimmed.split(/\s+/);
+    return tokens.length > 0 && tokens.every(isChordSymbol);
+}
+
+function extractChordLinePositions(chordLine, lyricLine) {
+    const result = [];
+    const matches = chordLine.matchAll(/\S+/g);
+    for (const match of matches) {
+        const symbol = match[0];
+        if (!isChordSymbol(symbol)) {
+            continue;
+        }
+        result.push({
+            symbol,
+            charIndex: charIndexForVisualColumn(lyricLine, match.index)
+        });
+    }
+    return result;
+}
+
+function charIndexForVisualColumn(line, visualColumn) {
+    return Math.min(visualColumn, line.length);
+}
+
+function isChordSymbol(value) {
+    return /^[A-GH][#b]?(?:m|maj|min|dim|aug|sus|add)?\d*(?:\/[A-GH][#b]?)?$/.test(value);
+}
+
 async function saveSong(event) {
     event.preventDefault();
     const payload = {
@@ -286,13 +472,17 @@ els.closeEditorButton.addEventListener("click", closeEditor);
 els.editorPanel.querySelector("[data-close-editor]").addEventListener("click", closeEditor);
 els.searchInput.addEventListener("input", renderSongList);
 els.addChordButton.addEventListener("click", addChord);
+els.parseSongButton.addEventListener("click", parseSongText);
 els.songForm.addEventListener("submit", saveSong);
 els.deleteButton.addEventListener("click", deleteSong);
-els.bodyInput.addEventListener("input", () => {
+els.bodyInput.addEventListener("keydown", handleBodyKeydown);
+els.bodyInput.addEventListener("input", syncChordsWithBody);
+
+function syncChordsWithBody() {
     const lines = els.bodyInput.value.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
     state.chords = state.chords.filter(chord => chord.lineIndex < lines.length && chord.charIndex <= lines[chord.lineIndex].length);
     renderChordList();
-});
+}
 
 loadSongs().then(() => {
     renderAll();

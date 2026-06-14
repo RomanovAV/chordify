@@ -11,7 +11,8 @@
     --danger: #b43d2f;
     --chord: #a34f15;
     --shadow: 0 18px 50px rgb(36 29 18 / 16%);
-    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --mono-font: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Monaco, monospace;
+    font-family: var(--mono-font);
 }
 
 * {
@@ -142,11 +143,12 @@ button[hidden] {
 }
 
 .song-view {
-    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-family: var(--mono-font);
     font-size: clamp(18px, 2vw, 24px);
     line-height: 1.35;
     overflow: auto;
     padding: 34px 0;
+    tab-size: 4;
     white-space: pre;
 }
 
@@ -279,14 +281,15 @@ label {
 textarea {
     min-height: 330px;
     resize: vertical;
-    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-family: var(--mono-font);
     line-height: 1.5;
+    tab-size: 4;
 }
 
 .chord-toolbar {
     display: grid;
     gap: 8px;
-    grid-template-columns: minmax(80px, 1fr) auto;
+    grid-template-columns: minmax(80px, 1fr) auto auto;
 }
 
 .chord-list {
@@ -353,6 +356,10 @@ textarea {
     }
 
     .form-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .chord-toolbar {
         grid-template-columns: 1fr;
     }
 }
