@@ -1,4 +1,4 @@
-package com.example.chordify.config;
+package com.example.chordstorer.config;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

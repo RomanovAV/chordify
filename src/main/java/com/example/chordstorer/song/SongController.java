@@ -1,4 +1,4 @@
-package com.example.chordify.song;
+package com.example.chordstorer.song;
 
 import java.util.List;
 import java.util.Map;

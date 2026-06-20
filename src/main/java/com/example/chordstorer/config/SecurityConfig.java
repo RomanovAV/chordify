@@ -1,4 +1,4 @@
-package com.example.chordify.config;
+package com.example.chordstorer.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

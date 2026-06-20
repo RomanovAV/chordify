@@ -1,4 +1,4 @@
-# Chordify
+# ChordStorer
 
 Personal guitar songbook with syllable-positioned chords.
 
@@ -12,7 +12,7 @@ Create local credentials:
 cp .env.example .env
 ```
 
-Edit `.env` and set a strong `CHORDIFY_PASSWORD`.
+Edit `.env` and set a strong `CHORDSTORER_PASSWORD`.
 
 ```sh
 docker compose up --build

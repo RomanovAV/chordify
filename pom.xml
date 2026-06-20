@@ -12,9 +12,9 @@
     </parent>
 
     <groupId>com.example</groupId>
-    <artifactId>chordify</artifactId>
+    <artifactId>chordstorer</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>chordify</name>
+    <name>chordstorer</name>
     <description>Personal guitar songbook with syllable-positioned chords</description>
 
     <properties>

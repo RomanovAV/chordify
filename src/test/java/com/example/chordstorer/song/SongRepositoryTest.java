@@ -1,4 +1,4 @@
-package com.example.chordify.song;
+package com.example.chordstorer.song;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

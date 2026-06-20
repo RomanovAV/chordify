@@ -234,7 +234,7 @@ function closeEditor() {
 
 function renderAll() {
     const hasSelection = Boolean(state.selected);
-    const title = hasSelection ? state.selected.title : "Chordify";
+    const title = hasSelection ? state.selected.title : "ChordStorer";
     els.songTitle.textContent = title;
     els.artistLabel.textContent = hasSelection ? state.selected.artist || "" : "";
     els.emptyState.hidden = hasSelection;

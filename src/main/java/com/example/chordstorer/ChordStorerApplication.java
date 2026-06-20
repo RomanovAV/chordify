@@ -1,12 +1,12 @@
-package com.example.chordify;
+package com.example.chordstorer;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class ChordifyApplication {
+public class ChordStorerApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(ChordifyApplication.class, args);
+        SpringApplication.run(ChordStorerApplication.class, args);
     }
 }

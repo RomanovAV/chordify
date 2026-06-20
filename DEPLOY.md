@@ -30,16 +30,16 @@ docker compose version
 Clone the repository:
 
 ```sh
-git clone REPOSITORY_URL chordify
-cd chordify
+git clone REPOSITORY_URL chordstorer
+cd chordstorer
 ```
 
 Or upload the project from your machine:
 
 ```sh
-rsync -av --exclude target --exclude data --exclude .git ./ root@SERVER_IP:/root/chordify/
+rsync -av --exclude target --exclude data --exclude .git ./ root@SERVER_IP:/root/chordstorer/
 ssh root@SERVER_IP
-cd /root/chordify
+cd /root/chordstorer
 ```
 
 ## 3. Set credentials
@@ -49,7 +49,7 @@ cp .env.example .env
 nano .env
 ```
 
-Set a strong `CHORDIFY_PASSWORD`.
+Set a strong `CHORDSTORER_PASSWORD`.
 
 ## 4. Start the app
 
@@ -134,7 +134,7 @@ docker compose down
 The app uses SQLite. The database is stored in the Docker volume:
 
 ```text
-chordify_chordify-data
+chordstorer_chordstorer-data
 ```
 
 Do not run `docker compose down -v` unless you want to delete the database.
@@ -142,7 +142,7 @@ Do not run `docker compose down -v` unless you want to delete the database.
 ## 7. Update
 
 ```sh
-cd /root/chordify
+cd /root/chordstorer
 git pull
 docker compose up --build -d
 ```
@@ -156,9 +156,9 @@ docker compose up --build -d
 ## 8. Backup SQLite
 
 ```sh
-mkdir -p ~/chordify-backups
+mkdir -p ~/chordstorer-backups
 docker run --rm \
-  -v chordify_chordify-data:/data \
-  -v ~/chordify-backups:/backup \
-  alpine sh -c 'cp /data/chordify.sqlite3 /backup/chordify-$(date +%F-%H%M%S).sqlite3'
+  -v chordstorer_chordstorer-data:/data \
+  -v ~/chordstorer-backups:/backup \
+  alpine sh -c 'cp /data/chordstorer.sqlite3 /backup/chordstorer-$(date +%F-%H%M%S).sqlite3'
 ```

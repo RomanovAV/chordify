@@ -1,4 +1,4 @@
-package com.example.chordify.song;
+package com.example.chordstorer.song;
 
 public record ChordPosition(
         Long id,

@@ -1,15 +1,15 @@
 services:
   app:
     build: .
-    container_name: chordify-app
+    container_name: chordstorer-app
     ports:
       - "127.0.0.1:8080:8080"
     environment:
-      SPRING_SECURITY_USER_NAME: ${CHORDIFY_USERNAME:?Set CHORDIFY_USERNAME in .env}
-      SPRING_SECURITY_USER_PASSWORD: ${CHORDIFY_PASSWORD:?Set CHORDIFY_PASSWORD in .env}
+      SPRING_SECURITY_USER_NAME: ${CHORDSTORER_USERNAME:?Set CHORDSTORER_USERNAME in .env}
+      SPRING_SECURITY_USER_PASSWORD: ${CHORDSTORER_PASSWORD:?Set CHORDSTORER_PASSWORD in .env}
     volumes:
-      - chordify-data:/app/data
+      - chordstorer-data:/app/data
     restart: unless-stopped
 
 volumes:
-  chordify-data:
+  chordstorer-data:
